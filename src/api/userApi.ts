@@ -23,3 +23,16 @@ export const fetchUserById = async (userId: number) => {
         throw new Error('An unexpected error occurred');
     }
 };
+
+export const fetchAllUsers = async () => {
+    console.log("Fetching All Users"); // Log the lecturer ID for debugging
+    try {
+        const response = await apiClient.get(`/User`);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+            throw error.response.data;
+        }
+        throw new Error('An unexpected error occurred');
+    }
+};

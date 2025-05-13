@@ -20,7 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         {/* <Route path="/role-based-access" element={<RoleBasedAccess component={SomeComponent} allowedRoles={['Admin', 'User']} />} /> */}
-        <Route path="/room-booking" element={<RoomBooking />} />
+        {/* <Route path="/room-booking" element={<RoomBooking />} /> */}
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/timetable" element={<TimetableViewer />} />
         <Route path="/issue-reporting" element={<IssueReporting />} />

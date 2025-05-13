@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -21,10 +21,17 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-} from '@mui/material';
-import { Events } from './StudentDashboard';
-import { fetchLecturerSubjects } from '../../api/api';
-import { UserProfileDetails } from '../Authentication/UserProfile';
+} from "@mui/material";
+import { fetchLecturerSubjects } from "../../api/api";
+import { UserProfileDetails } from "../Authentication/UserProfile";
+import { Events, NotificationType } from "../../api/models";
+//import { Notifications } from '@mui/icons-material';
+import {
+  createNotifcation,
+  getNotificationTypes,
+  NotificationDto,
+} from "../../api/notification";
+import { NotificationAdd } from "@mui/icons-material";
 
 interface LecturerDashboardProps {
   userId: number;
@@ -45,96 +52,140 @@ interface Student {
 
 const LecturerDashboard: React.FC<LecturerDashboardProps> = ({ userId }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: 'Alice Johnson', email: 'alice.johnson@example.com' },
-    { id: 2, name: 'Bob Smith', email: 'bob.smith@example.com' },
+    { id: 1, name: "Alice Johnson", email: "alice.johnson@example.com" },
+    { id: 2, name: "Bob Smith", email: "bob.smith@example.com" },
   ]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'add' | 'update'>('add');
-  const [formData, setFormData] = useState({ name: '', email: '' });
-  const [error, setError] = useState('');
-  const [events, setEvents] = useState<Events[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([
+    {
+      id: "1",
+      subjectName: "Mathematics",
+      description: "Math basics",
+      subjectCode: "MATH101",
+    },
+    {
+      id: "2",
+      subjectName: "Physics",
+      description: "Physics fundamentals",
+      subjectCode: "PHYS201",
+    },
+  ]);
+  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] =
+    useState(false);
+  const [notificationForm, setNotificationForm] = useState({
+    title: "",
+    message: "",
+    type: 0,
+    subject: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [types, setTypes] = useState<NotificationType[]>([]);
+  const [selectedType, setSelectedType] = useState<number | null>(null); // Variable to store the selected type
+
+  const handleNotificationTypeChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { value } = e.target;
+    setSelectedType(Number(value)); // Update the selected type
+    setNotificationForm((prev) => ({ ...prev, type: Number(value) })); // Update the notification form
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await fetchLecturerSubjects(userId);
-        setSubjects(data);
+        const data = await getNotificationTypes();
+        setTypes(data.$values);
+        // // Update filteredUsers with the fetched data
+        console.log("Users:", data.$values); // Log the data for debugging
       } catch (err) {
-        setError('Could not fetch subjects');
+        // setFilteredUsers(data.$values);
+        setError("Could not fetch users");
       }
     };
 
     fetchData();
   }, [userId]);
 
-  useEffect(() => {
-    // Mock data fetching
-    setEvents([
-      {
-        id: '1',
-        title: 'AI Workshop',
-        date: 'May 10, 2025',
-        description: 'Learn the basics of AI and machine learning.',
-      },
-      {
-        id: '2',
-        title: 'Cultural Fest',
-        date: 'May 20, 2025',
-        description: 'Celebrate diversity with music, food, and art.',
-      },
-    ]);
-  }, []);
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
-  const handleDialogOpen = (mode: 'add' | 'update', student?: Student) => {
-    setDialogMode(mode);
-    setSelectedStudent(student || null);
-    setFormData(student || { name: '', email: '' });
-    setIsDialogOpen(true);
+  const handleNotificationDialogOpen = () => {
+    setIsNotificationDialogOpen(true);
   };
 
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setFormData({ name: '', email: '' });
+  const handleNotificationDialogClose = () => {
+    setIsNotificationDialogOpen(false);
+    setNotificationForm({
+      title: "",
+      message: "",
+      type: 0,
+      subject: "",
+    });
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNotificationFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setNotificationForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = () => {
-    if (dialogMode === 'add') {
-      const newStudent = {
-        id: students.length + 1,
-        ...formData,
-      };
-      setStudents((prev) => [...prev, newStudent]);
-    } else if (dialogMode === 'update' && selectedStudent) {
-      setStudents((prev) =>
-        prev.map((student) =>
-          student.id === selectedStudent.id ? { ...student, ...formData } : student
-        )
-      );
+  const handleSendNotification = async () => {
+    const newNotification: NotificationDto = {
+      // notificationId: notifications.length + 1, // Temporary ID for frontend
+      userId: userId, // Lecturer's user ID
+      title: notificationForm.title, // Include the title property
+      message: notificationForm.message,
+      typeId: notificationForm.type,
+      createdDate: new Date().toISOString(),
+      subjectId: subjects.find(
+        (subject) => subject.subjectName === notificationForm.subject
+      )?.id
+        ? Number(
+            subjects.find(
+              (subject) => subject.subjectName === notificationForm.subject
+            )?.id
+          )
+        : null,
+      subject: notificationForm.subject || null,
+    };
+
+    try {
+      // Send the notification to the backend API
+      const response = await createNotifcation(newNotification); // Assuming createNotifcation is a function that sends the notification to the backend
+      // const response = await fetch('https://your-api-endpoint/api/notifications', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(newNotification),
+      // });
+
+      if (response.ok) {
+        const savedNotification = await response.json();
+        setNotifications((prev) => [...prev, savedNotification]); // Update the local state with the saved notification
+        handleNotificationDialogClose();
+      } else {
+        console.error("Failed to send notification:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
     }
-    handleDialogClose();
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        padding: '32px 0',
-        backgroundColor: '#f5f5f5', // Light gray background
+        minHeight: "100vh",
+        padding: "32px 0",
+        backgroundColor: "#f5f5f5",
       }}
     >
-        <UserProfileDetails userId={userId} /> {/* User Profile Menu */}
+      <UserProfileDetails userId={userId} />
       <Container>
         <Typography variant="h4" align="center" gutterBottom>
           Lecturer Dashboard
@@ -144,7 +195,7 @@ const LecturerDashboard: React.FC<LecturerDashboardProps> = ({ userId }) => {
         </Typography>
 
         {/* Tab Menu */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', marginBottom: 3 }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", marginBottom: 3 }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -159,130 +210,125 @@ const LecturerDashboard: React.FC<LecturerDashboardProps> = ({ userId }) => {
         </Box>
 
         {/* Tab Content */}
-        {activeTab === 0 && (
-          <Box>
-           <Container>
-        <Typography variant="h5" gutterBottom style={{ marginTop: '32px' }}>
-                  Upcoming Classes
-                </Typography>
-                <Grid container spacing={3}>
-                  {events.map((event) => (
-                      <Grid size={{xs:12,sm:6,md:4}}>
-                      <Card>
-                        <CardContent>
-                          <Typography variant="h6" gutterBottom>
-                            {event.title}
-                          </Typography>
-                          <Typography variant="body2" gutterBottom>
-                            {event.date}
-                          </Typography>
-                          <Typography variant="body2">{event.description}</Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-      </Container>
-          </Box>
-        )}
-        {activeTab === 1 && (
+        {activeTab === 2 && (
           <Box>
             <Typography variant="h5" gutterBottom>
-              Students
+              Notifications
             </Typography>
             <Button
               variant="contained"
               color="primary"
               sx={{ marginBottom: 2 }}
-              onClick={() => handleDialogOpen('add')}
+              onClick={handleNotificationDialogOpen}
             >
-              Add Student
+              Send Notification
             </Button>
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Message</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Created Date</TableCell>
+                    <TableCell>Subject</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{student.id}</TableCell>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          size="small"
-                          onClick={() => handleDialogOpen('update', student)}
-                          sx={{ marginRight: 1 }}
-                        >
-                          Update
-                        </Button>
-                      </TableCell>
+                  {notifications.map((notification) => (
+                    <TableRow key={notification.notificationId}>
+                      <TableCell>{notification.notificationId}</TableCell>
+                      <TableCell>{notification.title}</TableCell>
+                      <TableCell>{notification.message}</TableCell>
+                      <TableCell>{notification.typeId}</TableCell>
+                      <TableCell>{notification.createdDate}</TableCell>
+                      <TableCell>{notification.subject || "N/A"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
 
-            {/* Add/Update Dialog */}
-            <Dialog open={isDialogOpen} onClose={handleDialogClose}>
-              <DialogTitle>
-                {dialogMode === 'add' ? 'Add Student' : 'Update Student'}
-              </DialogTitle>
+            {/* Notification Dialog */}
+            <Dialog
+              open={isNotificationDialogOpen}
+              onClose={handleNotificationDialogClose}
+            >
+              <DialogTitle>Send Notification</DialogTitle>
               <DialogContent>
                 <TextField
-                  label="Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
+                  label="Title"
+                  name="title"
+                  value={notificationForm.title}
+                  onChange={handleNotificationFormChange}
                   fullWidth
                   margin="normal"
                 />
                 <TextField
-                  label="Email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
+                  label="Message"
+                  name="message"
+                  value={notificationForm.message}
+                  onChange={handleNotificationFormChange}
                   fullWidth
                   margin="normal"
+                  multiline
+                  rows={4}
                 />
+                <TextField
+                  label="Notification Type"
+                  name="notificationType"
+                  select
+                  value={selectedType || notificationForm.type} // Use the selected type or the form's type
+                  onChange={handleNotificationTypeChange} // Use the new handler
+                  fullWidth
+                  margin="normal"
+                  SelectProps={{
+                    native: true,
+                  }}
+                >
+                  <option value="">Select Notification Type</option>{" "}
+                  {/* Default option */}
+                  {types.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </TextField>
+                <TextField
+                  label="Subject"
+                  name="subject"
+                  select
+                  value={notificationForm.subject}
+                  onChange={handleNotificationFormChange}
+                  fullWidth
+                  margin="normal"
+                  SelectProps={{
+                    native: true,
+                  }}
+                >
+                  <option value="">None</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.subjectName}>
+                      {subject.subjectName}
+                    </option>
+                  ))}
+                </TextField>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleDialogClose} color="secondary">
+                <Button
+                  onClick={handleNotificationDialogClose}
+                  color="secondary"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleFormSubmit} color="primary">
-                  {dialogMode === 'add' ? 'Add' : 'Update'}
+                <Button onClick={handleSendNotification} color="primary">
+                  Send
                 </Button>
               </DialogActions>
             </Dialog>
           </Box>
         )}
-        {activeTab === 3 && (
-            <Box>
-                  <Grid container spacing={3}>
-          {subjects.map((subject) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h5" gutterBottom>
-                    {subject.subjectName} ({subject.subjectCode})
-                  </Typography>
-                  <Typography variant="body2">{subject.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-        </Box>
-       )}
       </Container>
     </Box>
   );
