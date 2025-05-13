@@ -56,28 +56,28 @@ export const login = async (email: string, password: string): Promise<string | n
 
     // Make the POST request
     const response = await axios.post(apiUrl, payload);
+
     // Check if the response contains the token
     if (response.data && response.data.token) {
       // Store the token in localStorage or sessionStorage
       localStorage.setItem("authToken", response.data.token);
-     // console.log("Response:", response.data.token); 
       console.log("Login successful!");
       console.log("Token:", response.data.token);
 
-      return response.data.Token; // Return the token for further use
+      return response.data.token; // Return the token for further use
     } else {
-      console.log("Response:", response.data.token); 
       console.error("Login failed: No token received.");
-      return null;
+      throw new Error("Invalid login credentials."); // Explicitly throw an error
     }
   } catch (error) {
     // Handle errors
     if (axios.isAxiosError(error) && error.response) {
       console.error("Login failed:", error.response.data);
+      throw new Error(error.response.data.message || "Invalid login credentials."); // Return error message from server or default
     } else {
       console.error("An error occurred:", (error as Error).message);
+      throw new Error("An unexpected error occurred. Please try again."); // Return a generic error message
     }
-    return null;
   }
 };
 

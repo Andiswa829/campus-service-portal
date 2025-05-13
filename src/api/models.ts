@@ -1,3 +1,5 @@
+import { Room } from "../components/Booking/RoomBooking";
+
 export interface Notification{
     notificationId: number;
     userId: number;
@@ -36,11 +38,53 @@ export interface IssueData {
     reportedBy: string; // Add other fields as required
 }
 export interface BookingData {
+    bookingId: number;
     roomId: string;
-    date: string;
-    timeSlot: string;
-    userId: string; // Add other fields as required
+    purposeId: number;
+    startTime: Date;
+    endTime: Date;
+    userId: string; 
+    statusId: number;
+    room?:Room;
+    roomName?:string;
+   // status?:Status;
+    status?:string;
+    userName?:string;
+    purpose?:string;
+    userEmail?:string;
 }
+
+interface NewsItem {
+    id: string;
+    title: string;
+    description: string;
+  }
+  
+  interface Subject {
+    id: string;
+    subjectName: string;
+    subjectCode: string;
+    description: string;
+  }
+  
+  export interface Events {
+    id: string;
+    title: string;
+    date: string;
+    description: string;
+  }
+  
+  interface StudentDashboardProps {
+    userId: number;
+  }
+
+export interface Status {
+    id: number;
+    name: string;
+}
+
+
+
 export interface UserRegistrationData {
     username: string;
     password: string;
