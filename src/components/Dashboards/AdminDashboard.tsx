@@ -20,6 +20,10 @@ import {
   DialogTitle,
   CircularProgress,
   Tooltip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from "@mui/material";
 import { fetchLecturerSubjects } from "../../api/api";
 import { fetchAllUsers } from "../../api/userApi";
@@ -30,12 +34,20 @@ import { fetchAllBookings } from "../../api/booking";
 import { BookingData } from "../../api/models";
 import BookingHelper from "../Booking/BookingHelper";
 import Analytics from "../Admin/Analytics";
+import IssueReporting from "../Maintenance/IssueReporting";
+import IssueReportingDashboard from "../Admin/IssueReporting";
+import IssueReportingFooter from "../Maintenance/IssueReportingFooter";
 
 interface User {
   userId: number;
   name: string;
   email: string;
-  role?: { roleName: string }; // Optional field for role with roleName property
+  role?: { roleName: string };
+  roleId: number; // Optional field for roleId
+  courseId?: string; // Optional field for courseId
+  facultyId?: string; // Optional field for facultyId
+  departmentId?: string; // Optional field for departmentId
+  // Optional field for role with roleName property
 }
 
 interface AdminDashboardProps {
@@ -55,7 +67,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "update">("add");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({ name: "", email: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    roleId: 0,
+    courseId: "",
+    facultyId: "",
+    departmentId: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,6 +111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
   };
 
   const handleUpdateBooking = (updatedBooking: BookingData) => {
+    console.log("Updated Booking:", updatedBooking);
     setBookings((prev) =>
       prev.map((booking) =>
         booking.bookingId === updatedBooking.bookingId
@@ -125,18 +145,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
   const handleDialogOpen = (mode: "add" | "update", user?: User) => {
     setDialogMode(mode);
     setSelectedUser(user || null);
-    setFormData(user || { name: "", email: "" });
+
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        roleId: user.roleId,
+        courseId: user.courseId || "",
+        facultyId: user.facultyId || "",
+        departmentId: user.departmentId || "",
+      });
+    } else {
+      setFormData({
+        name: "",
+        email: "",
+        roleId: 0,
+        courseId: "",
+        facultyId: "",
+        departmentId: "",
+      });
+    }
+
     setIsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setFormData({ name: "", email: "" });
+    setFormData({
+      name: "",
+      email: "",
+      roleId: 0,
+      courseId: "",
+      facultyId: "",
+      departmentId: "",
+    });
   };
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFormChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "roleId" || name.includes("Id") ? parseInt(value) : value,
+    }));
   };
 
   const handleFormSubmit = () => {
@@ -168,6 +219,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
   };
 
   return (
+    <>
     <Box display="flex" flexDirection="column" minHeight="100vh">
       {/* General Header */}
       <Box
@@ -193,18 +245,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
             textColor="inherit"
             indicatorColor="primary"
           >
-            <Tab label="Home" sx={{ alignItems: "flex-start" }}/>
-            <Tab label="Users" sx={{ alignItems: "flex-start" }}/>
-            <Tab label="Bookings" sx={{ alignItems: "flex-start" }}/>
-            <Tab label="Issues Reported" sx={{ alignItems: "flex-start" }}/>
+            <Tab label="Home" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Users" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Bookings" sx={{ alignItems: "flex-start" }} />
+            <Tab label="Issues Reported" sx={{ alignItems: "flex-start" }} />
           </Tabs>
         </Box>
 
         {/* Tab Content */}
         <Box flex={1} p={3}>
-          {activeTab === 0 && (
-          <Analytics/>
-          )}
+          {activeTab === 0 && <Analytics />}
           {activeTab === 1 && (
             <>
               <Typography variant="h5" gutterBottom>
@@ -294,6 +344,54 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
                     fullWidth
                     margin="normal"
                   />
+
+                  <FormControl fullWidth margin="normal">
+                      <InputLabel id="role-label">Role</InputLabel> {" "}
+                    <Select
+                      labelId="role-label"
+                      name="roleId"
+                      value={formData.roleId}
+                      onChange={handleFormChange}
+                      label="Role"
+                    >
+                          <MenuItem value={1}>Admin</MenuItem>
+                          <MenuItem value={2}>Student</MenuItem>
+                          <MenuItem value={3}>Lecturer</MenuItem> {" "}
+                    </Select>
+                  </FormControl>
+
+                  {(formData.roleId === 2 || formData.roleId === 3) && (
+                    <>
+                         {" "}
+                      <TextField
+                        label="Course ID"
+                        name="courseId"
+                        value={formData.courseId || ""}
+                        onChange={handleFormChange}
+                        fullWidth
+                        margin="normal"
+                      />
+                         {" "}
+                      <TextField
+                        label="Faculty ID"
+                        name="facultyId"
+                        value={formData.facultyId || ""}
+                        onChange={handleFormChange}
+                        fullWidth
+                        margin="normal"
+                      />
+                         {" "}
+                      <TextField
+                        label="Department ID"
+                        name="departmentId"
+                        value={formData.departmentId || ""}
+                        onChange={handleFormChange}
+                        fullWidth
+                        margin="normal"
+                      />
+                       {" "}
+                    </>
+                  )}
                 </DialogContent>
                 <DialogActions>
                   <Button onClick={handleDialogClose} color="secondary">
@@ -312,11 +410,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ userId }) => {
               onAddBooking={handleAddBooking}
               onUpdateBooking={handleUpdateBooking}
               onDeleteBooking={handleDeleteBooking}
+              userId={userId}
             />
+          )}
+          {activeTab === 3 && (
+            <Box>
+              <IssueReportingDashboard />
+            </Box>
           )}
         </Box>
       </Box>
     </Box>
+    <IssueReportingFooter userId={userId} />
+    </>
   );
 };
 

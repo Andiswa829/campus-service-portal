@@ -15,22 +15,24 @@ import GeneralDashboard from './components/Dashboards/GeneralDashboard';
 
 function App() {
   return (
+    <>
      <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         {/* <Route path="/role-based-access" element={<RoleBasedAccess component={SomeComponent} allowedRoles={['Admin', 'User']} />} /> */}
-        {/* <Route path="/room-booking" element={<RoomBooking />} /> */}
+         {/* <Route path="/room-booking" element={<RoomBooking userId={0} />} /> */}
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/timetable" element={<TimetableViewer />} />
         <Route path="/issue-reporting" element={<IssueReporting />} />
         {/* {/* <Route path="/notifications" element={<NotificationCenter />} />/} */}
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/analytics" element={<Analytics />} />
-        <Route path="/" element={<GeneralDashboard />} />
+        {/* <Route path="/" element={<GeneralDashboard />} /> */}
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
+    </>
   );
 }
 

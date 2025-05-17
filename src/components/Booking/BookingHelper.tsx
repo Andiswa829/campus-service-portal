@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { BookingData } from "../../api/models";
+import RoomBooking from "./RoomBooking";
 
 
 interface BookingHelperProps {
@@ -24,6 +25,7 @@ interface BookingHelperProps {
   onAddBooking: (booking: BookingData) => void;
   onUpdateBooking: (booking: BookingData) => void;
   onDeleteBooking: (id: number) => void;
+  userId: number;
 }
 
 const BookingHelper: React.FC<BookingHelperProps> = ({
@@ -31,13 +33,23 @@ const BookingHelper: React.FC<BookingHelperProps> = ({
   onAddBooking,
   onUpdateBooking,
   onDeleteBooking,
+  userId
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBookings, setFilteredBookings] = useState<BookingData[]>(bookings);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "update">("add");
   const [selectedBooking, setSelectedBooking] = useState<BookingData | null>(null);
-  const [formData, setFormData] = useState({ roomName: "", date: "", time: "" });
+  const [formData, setFormData] = useState<{
+    roomName: string;
+    date: Date | null;
+    time: string;
+  }>({
+    roomName: "",
+    date: null,
+    time: "",
+  });
+  
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
@@ -54,21 +66,28 @@ const BookingHelper: React.FC<BookingHelperProps> = ({
   const handleDialogOpen = (mode: "add" | "update", booking?: BookingData) => {
     setDialogMode(mode);
     setSelectedBooking(booking || null);
+  console.log("Selected Booking:", booking);
     setFormData(
       booking
-        ? { 
-            roomName: booking.room?.roomName || "", 
-            date: booking.startTime.toISOString().split("T")[0], 
-            time: booking.endTime.toISOString().split("T")[1].slice(0, 5) 
+        ? {
+            roomName: booking.room?.roomName || "",
+            date: new Date(booking.startTime), // Keep as Date
+            time: new Date(booking.endTime).toTimeString().slice(0, 5), // "HH:mm"
           }
-        : { roomName: "", date: "", time: "" }
+        : {
+            roomName: "",
+            date: null,
+            time: "",
+          }
     );
+  
     setIsDialogOpen(true);
   };
+  
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setFormData({ roomName: "", date: "", time: "" });
+    setFormData({ roomName: "", date: new Date(), time: "" });
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,7 +197,8 @@ const BookingHelper: React.FC<BookingHelperProps> = ({
         <DialogTitle>
           {dialogMode === "add" ? "Add Booking" : "Update Booking"}
         </DialogTitle>
-        <DialogContent>
+        <RoomBooking userId={userId} bookingId={selectedBooking?.bookingId}/>
+        {/* <DialogContent>
           <TextField
             label="Room Name"
             name="roomName"
@@ -219,7 +239,7 @@ const BookingHelper: React.FC<BookingHelperProps> = ({
           <Button onClick={handleFormSubmit} color="primary">
             {dialogMode === "add" ? "Add" : "Update"}
           </Button>
-        </DialogActions>
+        </DialogActions> */}
       </Dialog>
     </>
   );

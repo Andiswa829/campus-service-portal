@@ -5,6 +5,7 @@ import StudentDashboard from "../Dashboards/StudentDashboard";
 import { UserProfile } from "../../api/userApi";
 import AdminDashboard from "../Dashboards/AdminDashboard";
 import GeneralDashboard from "../Dashboards/GeneralDashboard";
+import Login from "../Authentication/Login";
 
 const Dashboard: React.FC = () => {
   const [userRole, setUserRole] = useState("");
@@ -39,7 +40,7 @@ const Dashboard: React.FC = () => {
       ) : userRole === "Student" ? (
         <StudentDashboard userId={userId} />
       ) : (
-       <GeneralDashboard/>
+       <Login/>
       )}
     </>
   );

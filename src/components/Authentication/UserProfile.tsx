@@ -68,7 +68,7 @@ export const UserProfileDetails: React.FC<UserProfileProps> = ({ userId }) => {
   const handleSignOut = () => {
     // Add sign-out logic here
     logout(); // Call the logout function to clear session data
-    navigate("/login"); // Redirect to the login page
+    navigate("/"); // Redirect to the login page
     handleMenuClose();
   };
 
